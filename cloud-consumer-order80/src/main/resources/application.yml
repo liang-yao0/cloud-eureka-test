@@ -1,0 +1,52 @@
+server:
+  port: 80
+
+eureka:
+  client:
+    register-with-eureka: false
+    service-url:
+      defaultZone: http://eureka7001.com:7001/eureka/,http://eureka7002.com:7002/eureka/
+
+#使用feign：主启动@EnableFeignClients，service类@FeignClient(注册中心的服务名)，服务者的服务不要方法体。
+
+#设置feign客户端超时时间(OpenFeign默认支持ribbon)(单位：毫秒),默认轮询实现了客户端的负载均衡
+#OpenFeign默认等待1秒钟，超过后报错，但有的请求需要长时间，所以设置超时时间。
+ribbon:
+  #指的是建立连接所用的时间，适用于网络状况正常的情况下,两端连接所用的时间
+  ReadTimeout: 5000
+  #指的是建立连接后从服务器读取到可用资源所用的时间
+  ConnectTimeout: 5000
+#feign的日志增强增强，需要@Bean注入Logger.Level，返回Logger.Level.FULL全部显示。
+logging:
+  level:
+    com.atguigu.springcloud.service.PaymentFeignService: debug
+##使用Hystrix：主启动@EnableHystrix。
+#开启feign支持Hystrix
+feign:
+  hystrix:
+    enabled: true
+spring:
+  cloud:
+    stream:
+      binders: # 在此处配置要绑定的rabbitmq的服务信息；
+        defaultRabbit: # 表示定义的名称，用于于binding整合
+          type: rabbit # 消息组件类型
+          environment: # 设置rabbitmq的相关的环境配置
+            spring:
+              rabbitmq:
+                host: localhost
+                port: 5672
+                username: guest
+                password: guest
+      bindings: # 服务的整合处理
+        input: # 这个名字是一个通道的名称
+          destination: studyExchange # 表示要使用的Exchange名称定义
+          content-type: application/json # 设置消息类型，本次为对象json，如果是文本则设置“text/plain”
+          binder: defaultRabbit # 设置要绑定的消息服务的具体设置
+          group: A_Group #<----------------------------------------关键
+  zipkin:
+    base-url: http://localhost:9411    #监控链路到9411上
+  sleuth:
+    sampler: #采样率值介于 0 到 1 之间，1 则表示全部采集
+      probability: 1
+
